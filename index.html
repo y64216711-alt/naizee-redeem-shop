@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NaiZee Store - Fruit Redeem Shop</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #0f172a; color: #fff; padding: 15px; }
+
+    /* Header Profile & Points */
+    .header-card {
+      background: linear-gradient(135deg, #1e293b, #334155);
+      border-radius: 16px;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      margin-bottom: 20px;
+    }
+    .user-info { display: flex; align-items: center; gap: 10px; }
+    .point-badge {
+      background: #8b5cf6;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 14px;
+      box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+    }
+
+    /* Product Grid */
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+    .fruit-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 12px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+    .fruit-card img { width: 80px; height: 80px; object-fit: contain; margin-bottom: 8px; }
+    .fruit-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .fruit-cost { color: #a7f3d0; font-size: 13px; font-weight: bold; margin-bottom: 10px; }
+    
+    .btn-exchange {
+      width: 100%;
+      padding: 8px 0;
+      border: none;
+      border-radius: 10px;
+      background: #2563eb;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn-exchange:disabled { background: #475569; color: #94a3b8; cursor: not-allowed; }
+
+    /* Admin Add Panel (Only visible to Admin) */
+    .admin-panel {
+      display: none;
+      background: #1e293b;
+      border: 2px dashed #8b5cf6;
+      border-radius: 16px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .admin-panel h3 { font-size: 14px; color: #c084fc; margin-bottom: 10px; }
+    .admin-input {
+      width: 100%; padding: 8px; margin-bottom: 8px;
+      border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff;
+    }
+    .btn-add { width: 100%; padding: 8px; border-radius: 8px; border: none; background: #10b981; color: #fff; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header-card">
+    <div class="user-info">
+      <div id="username" style="font-weight: bold;">Loading...</div>
+    </div>
+    <div class="point-badge">💎 <span id="user-points">0</span> Points</div>
+  </div>
+
+  <!-- Admin Panel (Admin Telegram ID များအတွက်သာ ပေါ်မည်) -->
+  <div id="admin-section" class="admin-panel">
+    <h3>⚙️ Admin Management (Add Fruit)</h3>
+    <input type="text" id="add-name" class="admin-input" placeholder="Fruit Name (e.g. Dough)">
+    <input type="text" id="add-img" class="admin-input" placeholder="Image URL">
+    <input type="number" id="add-points" class="admin-input" placeholder="Point Cost">
+    <button class="btn-add" onclick="addNewFruit()">+ Add Fruit to Shop</button>
+  </div>
+
+  <!-- Fruits Display Grid -->
+  <div class="shop-grid" id="fruit-container">
+    <!-- Dynamic Cards will be rendered here -->
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    // အစ်ကို့ရဲ့ Telegram User ID ကို ဒီမှာ ပြောင်းထည့်ပေးပါ
+    const ADMIN_TELEGRAM_ID = 7847823798; 
+
+    const currentUser = tg.initDataUnsafe?.user || { id: 999, first_name: "Customer" };
+    document.getElementById("username").innerText = currentUser.first_name;
+
+    // Database မှ လာမည့် User Point
+    let userPoints = 0; 
+    document.getElementById("user-points").innerText = userPoints;
+
+    // Admin ဟုတ်/မဟုတ် စစ်ဆေးခြင်း
+    if (currentUser.id === ADMIN_TELEGRAM_ID) {
+      document.getElementById("admin-section").style.display = "block";
+    }
+
+    // Default Fruit List (Admin မှ ထပ်တိုးနိုင်သည်)
+    let fruits = [
+      { id: 1, name: "Light", points: 300, img: "https://via.placeholder.com/80" },
+      { id: 2, name: "Buddha", points: 1000, img: "https://via.placeholder.com/80" },
+      { id: 3, name: "Dough", points: 5000, img: "https://via.placeholder.com/80" }
+    ];
+
+    function renderShop() {
+      const container = document.getElementById("fruit-container");
+      container.innerHTML = "";
+
+      fruits.forEach(fruit => {
+        const canAfford = userPoints >= fruit.points;
+        const card = document.createElement("div");
+        card.className = "fruit-card";
+        card.innerHTML = `
+          <img src="${fruit.img}" alt="${fruit.name}">
+          <div class="fruit-name">${fruit.name}</div>
+          <div class="fruit-cost">💎 ${fruit.points} Points</div>
+          <button class="btn-exchange" ${!canAfford ? 'disabled' : ''} onclick="exchangeFruit(${fruit.id})">
+            ${canAfford ? 'Exchange' : 'Need More Points'}
+          </button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Admin သီးသန့် အသီးသစ် ထည့်သည့် Logic
+    function addNewFruit() {
+      const name = document.getElementById("add-name").value;
+      const img = document.getElementById("add-img").value || "https://via.placeholder.com/80";
+      const points = parseInt(document.getElementById("add-points").value);
+
+      if (name && points) {
+        fruits.push({ id: Date.now(), name, points, img });
+        renderShop();
+        document.getElementById("add-name").value = "";
+        document.getElementById("add-img").value = "";
+        document.getElementById("add-points").value = "";
+        alert("Fruit added successfully!");
+      }
+    }
+
+    // Customer လဲလှယ်သည့် Logic
+    function exchangeFruit(fruitId) {
+      const fruit = fruits.find(f => f.id === fruitId);
+      if (fruit && userPoints >= fruit.points) {
+        tg.sendData(JSON.stringify({
+          action: "REDEEM_FRUIT",
+          fruitName: fruit.name,
+          cost: fruit.points
+        }));
+        tg.close();
+      }
+    }
+
+    renderShop();
+  </script>
+</body>
+</html>
+
