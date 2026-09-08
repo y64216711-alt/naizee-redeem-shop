@@ -6,7 +6,7 @@
   <title>NaiZee Store | Spin & Redeem</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   
-  <!-- Firebase Scripts (လိုအပ်သော SDK များ) -->
+  <!-- Firebase SDKs (v8) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -125,7 +125,7 @@
     <button class="tab-btn" onclick="switchTab('spin')">🎡 Spin Wheel (<span id="spin-count">0</span>)</button>
   </div>
 
-  <!-- Admin Panel (Only visible to Admin) -->
+  <!-- Admin Panel -->
   <div id="admin-section" class="admin-panel">
     <h3 style="color:#c084fc; margin-bottom:10px;">⚙️ Admin (Add Item)</h3>
     <input type="text" id="add-name" class="admin-input" placeholder="Item Name (e.g. Dough Fruit)">
@@ -141,52 +141,59 @@
 
   <!-- SPIN TAB -->
   <div id="tab-spin" class="tab-content" style="text-align: center;">
-    <div style="padding: 40px var(--card-bg); border-radius: 12px; background: var(--card-bg);">
+    <div style="padding: 30px; border-radius: 12px; background: var(--card-bg);">
       <h2>🎡 Daily Spin Wheel</h2>
       <p style="color: var(--text-dim);">Spin the wheel to earn points!</p>
-      <button class="btn-action" style="background:#8b5cf6; padding: 12px; font-size: 16px;" onclick="doSpin()">SPIN NOW</button>
+      <button class="btn-action" style="background:#8b5cf6; padding: 12px; font-size: 16px; width: 80%;" onclick="doSpin()">SPIN NOW</button>
     </div>
   </div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+    const tg = window.Telegram?.WebApp || {};
+    if (tg.expand) tg.expand();
 
-    // 1. Firebase Config
+    // 1. Firebase Configuration
     const firebaseConfig = {
       databaseURL: "https://naizee-store-default-rtdb.firebaseio.com"
     };
-    firebase.initializeApp(firebaseConfig);
+    
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.database();
 
-    // 2. Admin Telegram ID (အစ်ကို့ Telegram ID)
+    // 2. Admin ID
     const ADMIN_TELEGRAM_ID = 7586561132;
 
-    const user = tg.initDataUnsafe?.user || { id: 99999, first_name: "Customer" };
-    document.getElementById("username").innerText = user.first_name;
+    const user = tg.initDataUnsafe?.user || { id: 7586561132, first_name: "It's NaiZee" };
+    document.getElementById("username").innerText = user.first_name || "User";
 
-    // Admin စိစစ်ခြင်း
-    if (user.id == ADMIN_TELEGRAM_ID) {
+    // Admin စစ်ဆေးခြင်း
+    if (String(user.id) === String(ADMIN_TELEGRAM_ID)) {
       document.getElementById("admin-section").style.display = "block";
     }
 
     let userPoints = 0;
-    let availableSpins = 0;
+    let availableSpins = 1;
 
-    // Firebase Sync User Data
+    // Fetch User Data from Firebase
     db.ref('users/' + user.id).on('value', (snapshot) => {
       const data = snapshot.val() || { points: 0, spins: 1 };
       userPoints = data.points || 0;
       availableSpins = data.spins !== undefined ? data.spins : 1;
       document.getElementById("user-points").innerText = userPoints;
       document.getElementById("spin-count").innerText = availableSpins;
+    }, (error) => {
+      console.log("Firebase User Read Error: ", error);
     });
 
-    // Firebase Sync Items Data
+    // Fetch Items Data from Firebase
     let fruitsList = {};
     db.ref('fruits').on('value', (snapshot) => {
       fruitsList = snapshot.val() || {};
       renderShop();
+    }, (error) => {
+      document.getElementById("fruit-container").innerHTML = "<p style='grid-column: span 2; color:#ef4444;'>Database Connection Error. Please check Firebase Rules!</p>";
     });
 
     function switchTab(tabName) {
@@ -208,7 +215,7 @@
       
       const keys = Object.keys(fruitsList);
       if (keys.length === 0) {
-        container.innerHTML = "<p style='grid-column: span 2; color:#94a3b8;'>No items available in shop.</p>";
+        container.innerHTML = "<p style='grid-column: span 2; color:#94a3b8;'>No items in shop yet. Admin can add items above!</p>";
         return;
       }
 
@@ -242,6 +249,8 @@
           document.getElementById("add-name").value = "";
           document.getElementById("add-img").value = "";
           document.getElementById("add-points").value = "";
+        } else {
+          alert("Error adding item: " + err.message);
         }
       });
     }
