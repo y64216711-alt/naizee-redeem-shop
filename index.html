@@ -1,107 +1,113 @@
 <!DOCTYPE html>
-<html lang="my">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NaiZee Store - Redeem & Spin</title>
+  <title>NaiZee Store | Spin & Redeem</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- Firebase SDKs -->
+  
+  <!-- Firebase Scripts (လိုအပ်သော SDK များ) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #0f172a; color: #fff; padding: 15px; padding-bottom: 70px; }
 
-    /* Header Profile & Points */
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #6366f1;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+      user-select: none;
+    }
     .header-card {
-      background: linear-gradient(135deg, #1e293b, #334155);
-      border-radius: 16px;
-      padding: 15px;
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      margin-bottom: 15px;
+      margin-bottom: 20px;
     }
     .point-badge {
-      background: #8b5cf6;
-      padding: 8px 14px;
+      background: #4f46e5;
+      padding: 6px 12px;
       border-radius: 20px;
       font-weight: bold;
       font-size: 14px;
-      box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
     }
-
-    /* Tab Navigation */
     .nav-tabs {
       display: flex;
       gap: 10px;
-      margin-bottom: 15px;
+      margin-bottom: 20px;
     }
     .tab-btn {
       flex: 1;
       padding: 10px;
-      background: #1e293b;
-      border: 1px solid #334155;
-      color: #94a3b8;
-      border-radius: 10px;
+      border: none;
+      border-radius: 8px;
+      background: var(--card-bg);
+      color: var(--text-dim);
       font-weight: bold;
       cursor: pointer;
     }
     .tab-btn.active {
-      background: #3b82f6;
-      color: #fff;
-      border-color: #3b82f6;
+      background: var(--accent);
+      color: white;
     }
-
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-
-    /* Shop Grid */
-    .shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    .fruit-card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 16px;
+    
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .item-card {
+      background: var(--card-bg);
+      border-radius: 12px;
       padding: 12px;
       text-align: center;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      position: relative;
     }
-    .fruit-card img { width: 70px; height: 70px; object-fit: contain; margin: 0 auto 8px auto; }
-    .fruit-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-    .fruit-cost { color: #a7f3d0; font-size: 12px; font-weight: bold; margin-bottom: 8px; }
-    
+    .item-card img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
     .btn-action {
-      width: 100%; padding: 8px 0; border: none; border-radius: 8px;
-      background: #2563eb; color: white; font-weight: bold; cursor: pointer; margin-top: 4px;
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      background: #22c55e;
+      color: white;
+      font-weight: bold;
+      margin-top: 8px;
+      cursor: pointer;
     }
-    .btn-action:disabled { background: #475569; color: #94a3b8; }
-    .btn-delete { background: #ef4444; margin-top: 5px; }
-
-    /* Spin Wheel UI */
-    .spin-container { text-align: center; padding: 20px 0; }
-    .wheel-box {
-      width: 220px; height: 220px; border-radius: 50%; border: 6px solid #8b5cf6;
-      margin: 0 auto 20px auto; display: flex; align-items: center; justify-content: center;
-      background: conic-gradient(#3b82f6 0 90deg, #10b981 90deg 180deg, #f59e0b 180deg 270deg, #ef4444 270deg 360deg);
-      transition: transform 3s cubic-bezier(0.1, 2.7, 0.32, 1);
-    }
-    .wheel-center {
-      width: 70px; height: 70px; background: #0f172a; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid #fff;
-    }
-
-    /* Admin Panel */
     .admin-panel {
-      display: none; background: #1e293b; border: 2px dashed #8b5cf6;
-      border-radius: 16px; padding: 15px; margin-bottom: 15px;
+      background: #334155;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
     }
     .admin-input {
-      width: 100%; padding: 8px; margin-bottom: 8px;
-      border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff;
+      width: 100%;
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 4px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: white;
+      box-sizing: border-box;
     }
   </style>
 </head>
@@ -119,27 +125,26 @@
     <button class="tab-btn" onclick="switchTab('spin')">🎡 Spin Wheel (<span id="spin-count">0</span>)</button>
   </div>
 
-  <!-- Admin Panel -->
+  <!-- Admin Panel (Only visible to Admin) -->
   <div id="admin-section" class="admin-panel">
-    <h3 style="color:#c084fc; margin-bottom:10px;">⚙️ Admin (Add New Fruit)</h3>
-    <input type="text" id="add-name" class="admin-input" placeholder="Fruit Name (e.g. Dough)">
+    <h3 style="color:#c084fc; margin-bottom:10px;">⚙️ Admin (Add Item)</h3>
+    <input type="text" id="add-name" class="admin-input" placeholder="Item Name (e.g. Dough Fruit)">
     <input type="text" id="add-img" class="admin-input" placeholder="Image Direct URL">
     <input type="number" id="add-points" class="admin-input" placeholder="Point Cost">
-    <button class="btn-action" style="background:#10b981;" onclick="addNewFruit()">+ Add Fruit to Shop</button>
+    <button class="btn-action" style="background:#10b981;" onclick="addNewFruit()">+ Add Item to Shop</button>
   </div>
 
   <!-- SHOP TAB -->
   <div id="tab-shop" class="tab-content active">
-    <div class="shop-grid" id="fruit-container"></div>
+    <div class="shop-grid" id="fruit-container">Loading items...</div>
   </div>
 
   <!-- SPIN TAB -->
-  <div id="tab-spin" class="tab-content">
-    <div class="spin-container">
-      <div class="wheel-box" id="wheel">
-        <div class="wheel-center">SPIN</div>
-      </div>
-      <button class="btn-action" style="background:#8b5cf6; padding:12px;" id="spin-btn" onclick="spinWheel()">SPIN NOW</button>
+  <div id="tab-spin" class="tab-content" style="text-align: center;">
+    <div style="padding: 40px var(--card-bg); border-radius: 12px; background: var(--card-bg);">
+      <h2>🎡 Daily Spin Wheel</h2>
+      <p style="color: var(--text-dim);">Spin the wheel to earn points!</p>
+      <button class="btn-action" style="background:#8b5cf6; padding: 12px; font-size: 16px;" onclick="doSpin()">SPIN NOW</button>
     </div>
   </div>
 
@@ -154,13 +159,14 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 2. Admin Telegram ID (အစ်ကို့ ID အမှန် ထည့်ပြီးပါပြီ)
+    // 2. Admin Telegram ID (အစ်ကို့ Telegram ID)
     const ADMIN_TELEGRAM_ID = 7586561132;
 
     const user = tg.initDataUnsafe?.user || { id: 99999, first_name: "Customer" };
     document.getElementById("username").innerText = user.first_name;
 
-    if (user.id === ADMIN_TELEGRAM_ID) {
+    // Admin စိစစ်ခြင်း
+    if (user.id == ADMIN_TELEGRAM_ID) {
       document.getElementById("admin-section").style.display = "block";
     }
 
@@ -169,25 +175,25 @@
 
     // Firebase Sync User Data
     db.ref('users/' + user.id).on('value', (snapshot) => {
-      const data = snapshot.val() || { points: 0, spins: 0 };
+      const data = snapshot.val() || { points: 0, spins: 1 };
       userPoints = data.points || 0;
-      availableSpins = data.spins || 0;
+      availableSpins = data.spins !== undefined ? data.spins : 1;
       document.getElementById("user-points").innerText = userPoints;
       document.getElementById("spin-count").innerText = availableSpins;
-      renderShop();
     });
 
-    // Firebase Sync Fruits Data
+    // Firebase Sync Items Data
     let fruitsList = {};
     db.ref('fruits').on('value', (snapshot) => {
       fruitsList = snapshot.val() || {};
       renderShop();
     });
 
-    function switchTab(tab) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      if(tab === 'shop') {
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      if (tabName === 'shop') {
         document.querySelectorAll('.tab-btn')[0].classList.add('active');
         document.getElementById('tab-shop').classList.add('active');
       } else {
@@ -199,91 +205,81 @@
     function renderShop() {
       const container = document.getElementById("fruit-container");
       container.innerHTML = "";
-      for (let key in fruitsList) {
-        const fruit = fruitsList[key];
-        const canAfford = userPoints >= fruit.points;
-        const card = document.createElement("div");
-        card.className = "fruit-card";
-        card.innerHTML = `
-          <img src="${fruit.img || 'https://via.placeholder.com/70'}" alt="${fruit.name}">
-          <div class="fruit-name">${fruit.name}</div>
-          <div class="fruit-cost">💎 ${fruit.points} Points</div>
-          <button class="btn-action" ${!canAfford ? 'disabled' : ''} onclick="exchangeFruit('${fruit.name}', ${fruit.points})">
-            ${canAfford ? 'Exchange' : 'Need Points'}
-          </button>
-          ${user.id === ADMIN_TELEGRAM_ID ? `<button class="btn-action btn-delete" onclick="deleteFruit('${key}')">🗑️ Delete (ဖြုတ်ချရန်)</button>` : ''}
-        `;
-        container.appendChild(card);
+      
+      const keys = Object.keys(fruitsList);
+      if (keys.length === 0) {
+        container.innerHTML = "<p style='grid-column: span 2; color:#94a3b8;'>No items available in shop.</p>";
+        return;
       }
+
+      keys.forEach(key => {
+        const item = fruitsList[key];
+        container.innerHTML += `
+          <div class="item-card">
+            <img src="${item.img || 'https://via.placeholder.com/100'}" alt="${item.name}">
+            <h4 style="margin: 8px 0 4px 0;">${item.name}</h4>
+            <p style="margin:0; font-size:12px; color:#a78bfa;">💎 ${item.points} Points</p>
+            <button class="btn-action" onclick="redeemItem('${item.name}', ${item.points})">Redeem</button>
+          </div>
+        `;
+      });
     }
 
-    // Admin: Add Fruit
     function addNewFruit() {
       const name = document.getElementById("add-name").value;
       const img = document.getElementById("add-img").value;
       const points = parseInt(document.getElementById("add-points").value);
-      if (name && points) {
-        db.ref('fruits').push({ name, img, points });
-        document.getElementById("add-name").value = "";
-        document.getElementById("add-img").value = "";
-        document.getElementById("add-points").value = "";
-      }
-    }
 
-    // Admin: Delete Fruit
-    function deleteFruit(key) {
-      if(confirm("ဒီအသီးကို ဆိုင်ထဲကနေ အပြီးဖျက်လိုက်တော့မလား?")) {
-        db.ref('fruits/' + key).remove();
-      }
-    }
-
-    // Exchange Logic
-    function exchangeFruit(name, cost) {
-      if (userPoints >= cost) {
-        db.ref('users/' + user.id).update({ points: userPoints - cost });
-        tg.sendData(JSON.stringify({ action: "REDEEM", fruitName: name, cost: cost }));
-        alert(name + " ကို အောင်မြင်စွာ လဲလှယ်လိုက်ပါပြီ!");
-      }
-    }
-
-    // Spin Wheel Logic
-    function spinWheel() {
-      if (availableSpins <= 0) {
-        alert("မဲလှည့်ခွင့် မရှိတော့ပါ။ ပြေစာ ပို့ပြီး မဲလှည့်ခွင့် ရယူပါ!");
+      if (!name || !points) {
+        alert("Please enter Name and Points!");
         return;
       }
-      
-      const wheel = document.getElementById("wheel");
-      const randomDeg = Math.floor(1800 + Math.random() * 360);
-      wheel.style.transform = `rotate(${randomDeg}deg)`;
 
-      // Deduct spin
-      db.ref('users/' + user.id).update({ spins: availableSpins - 1 });
-
-      setTimeout(() => {
-        // Spin Rewards List
-        const rewards = [
-          { type: 'fruit', name: 'Dough Fruit', pointsValue: 3000 },
-          { type: 'point', name: '500 Points', amount: 500 },
-          { type: 'fruit', name: 'Buddha Fruit', pointsValue: 1000 },
-          { type: 'point', name: '100 Points', amount: 100 }
-        ];
-        const result = rewards[Math.floor(Math.random() * rewards.length)];
-
-        if (result.type === 'fruit') {
-          const choice = confirm(`🎉 Congratulations! ${result.name} ပေါက်သွားပါသည်။\n\n[ OK ] = အသီးတိုက်ရိုက်ယူမည်\n[ Cancel ] = ${result.pointsValue} Points အဖြစ် ပြောင်းလဲမည်`);
-          if (choice) {
-            tg.sendData(JSON.stringify({ action: "SPIN_FRUIT_CLAIM", fruitName: result.name }));
-            alert("အသီးထုတ်ယူခွင့် Admin ထံ စာရောက်သွားပါပြီ!");
-          } else {
-            db.ref('users/' + user.id).update({ points: userPoints + result.pointsValue });
-            alert(`${result.pointsValue} Points သို့ အောင်မြင်စွာ ပြောင်းလိုက်ပါပြီ!`);
-          }
-        } else {
-          db.ref('users/' + user.id).update({ points: userPoints + result.amount });
-          alert(`🎉 ${result.name} ရရှိသွားပါသည်။ Balance ထဲ Auto ထည့်ပေးလိုက်ပါပြီ!`);
+      const newRef = db.ref('fruits').push();
+      newRef.set({ name, img, points }, (err) => {
+        if (!err) {
+          alert("Item Added Successfully!");
+          document.getElementById("add-name").value = "";
+          document.getElementById("add-img").value = "";
+          document.getElementById("add-points").value = "";
         }
-      }, 3200);
+      });
+    }
+
+    function redeemItem(itemName, cost) {
+      if (userPoints < cost) {
+        alert("Not enough points!");
+        return;
+      }
+
+      db.ref('users/' + user.id).update({
+        points: userPoints - cost
+      });
+
+      db.ref('orders').push({
+        userId: user.id,
+        userName: user.first_name,
+        item: itemName,
+        cost: cost,
+        timestamp: Date.now()
+      });
+
+      alert(`Redeemed ${itemName} successfully!`);
+    }
+
+    function doSpin() {
+      if (availableSpins <= 0) {
+        alert("No spins left today!");
+        return;
+      }
+
+      const wonPoints = Math.floor(Math.random() * 50) + 10;
+      db.ref('users/' + user.id).update({
+        points: userPoints + wonPoints,
+        spins: availableSpins - 1
+      });
+
+      alert(`You won ${wonPoints} Points! 🎉`);
     }
   </script>
 </body>
